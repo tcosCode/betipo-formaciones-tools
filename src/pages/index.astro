@@ -1,144 +1,54 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import sql from '../lib/db';
-import type { Formation } from '../types';
+import Layout from "../layouts/Layout.astro";
+import sql from "../lib/db";
+import type { Formation } from "../types";
+import FormationGrid from "../components/FormationGrid";
 
 let formations: Formation[] = [];
-let errorMsg = '';
+let errorMsg = "";
 
 try {
-  formations = await sql<Formation[]>`SELECT * FROM formaciones`;
+  const rawFormations = await sql<
+    Formation[]
+  >`SELECT * FROM formaciones ORDER BY fecha_inicio DESC`;
+  // Serialize dates to strings/JSON to ensure safe transfer to client component
+  formations = JSON.parse(JSON.stringify(rawFormations));
 } catch (error) {
-  console.error('Error fetching formations:', error);
+  console.error("Error fetching formations:", error);
   errorMsg = error instanceof Error ? error.message : String(error);
 }
 ---
 
 <Layout>
   <div class="mx-auto max-w-[1200px] px-4 py-10">
-
-    <!-- HEADER -->
-    <div class="mb-8 rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 class="text-3xl font-semibold text-slate-900">
-            Formaciones
-          </h1>
-          <p class="mt-1 text-slate-500">
-            Listado completo de cursos y talleres disponibles
-          </p>
-        </div>
-
-        <button
-          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
+    {
+      errorMsg ? (
+        <div
+          class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 shadow-sm"
+          role="alert"
         >
-          <span>Nueva formación</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12h14" />
-            <path d="M12 5v14" />
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- ERROR -->
-    {errorMsg && (
-      <div
-        class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 shadow-sm"
-        role="alert"
-      >
-        <div class="flex gap-3">
-          <svg class="h-5 w-5 flex-shrink-0 text-red-500" xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clip-rule="evenodd" />
-          </svg>
-
-          <div>
-            <h3 class="text-sm font-semibold">Error al cargar formaciones</h3>
-            <p class="mt-1 text-sm">{errorMsg}</p>
+          <div class="flex gap-3">
+            <svg
+              class="h-5 w-5 flex-shrink-0 text-red-500"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <div>
+              <h3 class="text-sm font-semibold">Error al cargar formaciones</h3>
+              <p class="mt-1 text-sm">{errorMsg}</p>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-
-    <!-- EMPTY STATE -->
-    {formations.length === 0 && !errorMsg ? (
-      <div class="flex flex-col items-center justify-center rounded-2xl bg-white py-16 text-center shadow-sm border border-slate-200">
-        <div class="mb-4 rounded-full bg-blue-50 p-4 text-blue-600">
-          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="m9 12 2 2 4-4" />
-          </svg>
-        </div>
-
-        <h3 class="text-lg font-semibold text-slate-800">
-          No hay formaciones todavía
-        </h3>
-
-        <p class="mt-1 max-w-sm text-slate-500">
-          Comienza creando tu primera formación para empezar a gestionarlas.
-        </p>
-      </div>
-    ) : (
-      <!-- TABLE -->
-      <div class="overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200">
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-slate-50 border-b border-slate-200">
-              <tr>
-                {formations.length > 0 && Object.keys(formations[0]).map((key) => (
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600"
-                  >
-                    {key.replace(/_/g, ' ')}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody class="divide-y divide-slate-200">
-              {formations.map((formation) => (
-                <tr class="transition hover:bg-blue-50/40">
-                  {Object.values(formation).map((value) => (
-                    <td
-                      class="max-w-[260px] truncate px-6 py-4 text-slate-700"
-                      title={value === null ? 'N/A' : String(value)}
-                    >
-                      {value === null
-                        ? <span class="italic text-slate-400">N/A</span>
-                        : typeof value === 'object'
-                          ? JSON.stringify(value)
-                          : String(value)}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- FOOTER -->
-        <div class="flex items-center justify-between bg-slate-50 px-6 py-3 text-xs text-slate-500 border-t border-slate-200">
-          <span>
-            {formations.length} registro{formations.length !== 1 ? 's' : ''}
-          </span>
-
-          <div class="flex gap-1">
-            <button class="rounded-lg px-2 py-1 hover:bg-slate-200 disabled:opacity-40" disabled>
-              ←
-            </button>
-            <button class="rounded-lg px-2 py-1 hover:bg-slate-200 disabled:opacity-40" disabled>
-              →
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
+      ) : (
+        <FormationGrid client:load initialFormations={formations} />
+      )
+    }
   </div>
 </Layout>
