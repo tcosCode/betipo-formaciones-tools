@@ -28,8 +28,6 @@ export function FormationModal({
 
   useEffect(() => {
     if (formation) {
-      // Format dates for input type="datetime-local" if needed, or just keep as string if API handles it.
-      // Assuming naive string handling for now based on previous steps, but datetime-local needs YYYY-MM-DDTHH:mm
       const formatDate = (date: string | Date | undefined) => {
         if (!date) return "";
         const d = new Date(date);
@@ -75,7 +73,8 @@ export function FormationModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto"
+      className="fixed inset-0 overflow-y-auto"
+      style={{ zIndex: 9999 }}
       role="dialog"
       aria-modal="true"
     >
@@ -92,7 +91,7 @@ export function FormationModal({
           &#8203;
         </span>
 
-        <div className="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+        <div className="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle relative z-50">
           <form onSubmit={handleSubmit}>
             <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
               <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
