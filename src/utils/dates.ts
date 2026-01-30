@@ -32,7 +32,7 @@ export const spainToUtc = (localDatetime: string): string => {
  */
 export const formatSpainDateTime = (isoString: string): string => {
   if (!isoString) return "";
-  return dayjs.utc(isoString).tz(SPAIN_TZ).format("DD/MM/YYYY HH:mm[h]");
+  return dayjs.utc(isoString).tz(SPAIN_TZ).format("DD/MM/YYYY hh:mm A");
 };
 
 /**

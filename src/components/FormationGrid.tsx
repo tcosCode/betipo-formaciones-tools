@@ -112,7 +112,7 @@ export default function FormationGrid({
           prev.map((f) => (f.id === savedFormation.id ? savedFormation : f)),
         );
       } else {
-        setFormations((prev) => [...prev, savedFormation]);
+        setFormations((prev) => [savedFormation, ...prev]);
       }
 
       setIsModalOpen(false);
