@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import sql from "../../../lib/db";
+import { dbDateToUtc } from "../../../utils/dates";
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -19,10 +20,18 @@ export const POST: APIRoute = async ({ request }) => {
     const result = await sql`
       INSERT INTO formaciones (asunto, entidad, descripcion, fecha_inicio, fecha_fin, enlace, oculta)
       VALUES (${asunto}, ${entidad}, ${descripcion}, ${fecha_inicio}, ${fecha_fin}, ${enlace}, ${oculta})
-      RETURNING *
+      RETURNING id, asunto, entidad, descripcion, enlace, oculta,
+        fecha_inicio::text as fecha_inicio,
+        fecha_fin::text as fecha_fin
     `;
 
-    return new Response(JSON.stringify(result[0]), {
+    const formation = {
+      ...result[0],
+      fecha_inicio: dbDateToUtc(result[0].fecha_inicio),
+      fecha_fin: dbDateToUtc(result[0].fecha_fin),
+    };
+
+    return new Response(JSON.stringify(formation), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });

@@ -3,16 +3,26 @@ import Layout from "../layouts/Layout.astro";
 import sql from "../lib/db";
 import type { Formation } from "../types";
 import FormationGrid from "../components/FormationGrid";
+import { dbDateToUtc } from "../utils/dates";
 
 let formations: Formation[] = [];
 let errorMsg = "";
 
 try {
-  const rawFormations = await sql<
-    Formation[]
-  >`SELECT * FROM formaciones ORDER BY fecha_inicio DESC`;
-  // Serialize dates to strings/JSON to ensure safe transfer to client component
-  formations = JSON.parse(JSON.stringify(rawFormations));
+  const rawFormations = await sql`
+    SELECT 
+      id, asunto, entidad, descripcion, enlace, oculta,
+      fecha_inicio::text as fecha_inicio,
+      fecha_fin::text as fecha_fin
+    FROM formaciones 
+    ORDER BY fecha_inicio DESC
+  `;
+
+  formations = rawFormations.map((f) => ({
+    ...(f as Formation),
+    fecha_inicio: dbDateToUtc(f.fecha_inicio),
+    fecha_fin: dbDateToUtc(f.fecha_fin),
+  }));
 } catch (error) {
   console.error("Error fetching formations:", error);
   errorMsg = error instanceof Error ? error.message : String(error);

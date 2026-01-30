@@ -1,5 +1,5 @@
-import React from "react";
 import type { Formation } from "../types";
+import { formatSpainDateTime } from "../utils/dates";
 
 interface FormationCardProps {
   formation: Formation;
@@ -12,14 +12,6 @@ export function FormationCard({
   onEdit,
   onDelete,
 }: FormationCardProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
       <div className="p-6">
@@ -62,8 +54,8 @@ export function FormationCard({
               />
             </svg>
             <span>
-              {formatDate(formation.fecha_inicio)} -{" "}
-              {formatDate(formation.fecha_fin)}
+              {formatSpainDateTime(formation.fecha_inicio)} -{" "}
+              {formatSpainDateTime(formation.fecha_fin)}
             </span>
           </div>
           {formation.enlace && (

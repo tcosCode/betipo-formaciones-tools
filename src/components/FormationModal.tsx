@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { Formation } from "../types";
+import { utcToSpain, spainToUtc } from "../utils/dates";
 
 interface FormationModalProps {
   isOpen: boolean;
@@ -28,17 +29,10 @@ export function FormationModal({
 
   useEffect(() => {
     if (formation) {
-      const formatDate = (date: string | Date | undefined) => {
-        if (!date) return "";
-        const d = new Date(date);
-        if (isNaN(d.getTime())) return "";
-        return d.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
-      };
-
       setFormData({
         ...formation,
-        fecha_inicio: formatDate(formation.fecha_inicio),
-        fecha_fin: formatDate(formation.fecha_fin),
+        fecha_inicio: utcToSpain(formation.fecha_inicio as string),
+        fecha_fin: utcToSpain(formation.fecha_fin as string),
       });
     } else {
       setFormData({
@@ -66,7 +60,15 @@ export function FormationModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    // Convertir fechas de España a UTC antes de enviar
+    const dataToSend = {
+      ...formData,
+      fecha_inicio: spainToUtc(formData.fecha_inicio as string),
+      fecha_fin: spainToUtc(formData.fecha_fin as string),
+    };
+
+    onSubmit(dataToSend);
   };
 
   if (!isOpen) return null;
@@ -97,6 +99,12 @@ export function FormationModal({
               <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
                 {formation ? "Editar Formación" : "Nueva Formación"}
               </h3>
+
+              {/* Aviso de zona horaria */}
+              <div className="mb-4 rounded-md bg-blue-50 p-3 text-sm text-blue-700 border border-blue-200">
+                <span className="font-medium">⏰ Zona horaria:</span> Las fechas
+                se muestran y guardan en hora de España (Europe/Madrid)
+              </div>
 
               <div className="space-y-4">
                 <div>
@@ -158,7 +166,7 @@ export function FormationModal({
                       htmlFor="fecha_inicio"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Fecha Inicio
+                      Fecha Inicio (España)
                     </label>
                     <input
                       type="datetime-local"
@@ -175,7 +183,7 @@ export function FormationModal({
                       htmlFor="fecha_fin"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Fecha Fin
+                      Fecha Fin (España)
                     </label>
                     <input
                       type="datetime-local"

@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import sql from "../../../lib/db";
+import { dbDateToUtc } from "../../../utils/dates";
 
 export const PUT: APIRoute = async ({ request, params }) => {
   const id = params.id;
@@ -33,7 +34,9 @@ export const PUT: APIRoute = async ({ request, params }) => {
           enlace = ${enlace},
           oculta = ${oculta}
       WHERE id = ${id}
-      RETURNING *
+      RETURNING id, asunto, entidad, descripcion, enlace, oculta,
+        fecha_inicio::text as fecha_inicio,
+        fecha_fin::text as fecha_fin
     `;
 
     if (result.length === 0) {
@@ -42,7 +45,13 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
-    return new Response(JSON.stringify(result[0]), {
+    const formation = {
+      ...result[0],
+      fecha_inicio: dbDateToUtc(result[0].fecha_inicio),
+      fecha_fin: dbDateToUtc(result[0].fecha_fin),
+    };
+
+    return new Response(JSON.stringify(formation), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

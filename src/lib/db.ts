@@ -7,6 +7,9 @@ const sql = postgres({
   username: import.meta.env.DB_USERNAME,
   password: import.meta.env.DB_PASSWORD,
   ssl: "require",
+  connection: {
+    timezone: "UTC",
+  },
 });
 
 export default sql;
