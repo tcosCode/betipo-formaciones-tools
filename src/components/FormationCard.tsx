@@ -1,3 +1,5 @@
+import Swal from "sweetalert2";
+
 import type { Formation } from "../types";
 import { formatSpainDateTime } from "../utils/dates";
 
@@ -106,12 +108,19 @@ export function FormationCard({
         </button>
 
         <button
-          onClick={() => {
-            if (
-              window.confirm(
-                "¿Estás seguro de que quieres eliminar esta formación?",
-              )
-            ) {
+          onClick={async () => {
+            const result = await Swal.fire({
+              title: "¿Eliminar formación?",
+              text: "Esta acción no se puede deshacer",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonColor: "#d33",
+              cancelButtonColor: "#6b7280",
+              confirmButtonText: "Sí, eliminar",
+              cancelButtonText: "Cancelar",
+            });
+
+            if (result.isConfirmed) {
               onDelete(formation.id);
             }
           }}

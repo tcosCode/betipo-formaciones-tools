@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
-import type { Formation } from "../types";
+import { useState, useEffect } from "react";
+import Swal from "sweetalert2";
+
 import { FormationCard } from "./FormationCard";
 import { FormationModal } from "./FormationModal";
 import { EnvSelector } from "./EnvSelector";
+import type { Formation } from "../types";
 
 interface FormationGridProps {
   initialFormations: Formation[];
@@ -36,6 +38,11 @@ export default function FormationGrid({
         setFormations(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error al cargar");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error al cargar",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -44,9 +51,20 @@ export default function FormationGrid({
     fetchFormations();
   }, [env]);
 
-  const handleEnvChange = (newEnv: "dev" | "prod") => {
+  const handleEnvChange = async (newEnv: "dev" | "prod") => {
     if (newEnv === "prod") {
-      if (!window.confirm("¿Estás seguro de cambiar a PRODUCCIÓN?")) {
+      const result = await Swal.fire({
+        title: "¿Cambiar a PRODUCCIÓN?",
+        text: "Los cambios afectarán datos reales",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Sí, cambiar",
+        cancelButtonText: "Cancelar",
+      });
+
+      if (!result.isConfirmed) {
         return;
       }
     }
@@ -76,6 +94,11 @@ export default function FormationGrid({
       setFormations((prev) => prev.filter((f) => f.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al eliminar");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error al eliminar",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -115,10 +138,23 @@ export default function FormationGrid({
         setFormations((prev) => [savedFormation, ...prev]);
       }
 
+      Swal.fire({
+        icon: "success",
+        title: isEditing ? "Formación actualizada" : "Formación creada",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
       setIsModalOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar");
       console.error(err);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error al guardar",
+      });
     } finally {
       setIsLoading(false);
     }

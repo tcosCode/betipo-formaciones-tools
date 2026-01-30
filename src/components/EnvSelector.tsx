@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-
 interface EnvSelectorProps {
   onChange: (env: "dev" | "prod") => void;
   currentEnv: "dev" | "prod";
