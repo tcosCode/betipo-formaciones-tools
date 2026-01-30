@@ -1,11 +1,14 @@
 export const prerender = false;
 
 import type { APIRoute } from "astro";
-import sql from "../../../lib/db";
+import { getDb } from "../../../lib/db";
 import { dbDateToUtc } from "../../../utils/dates";
 
-export const PUT: APIRoute = async ({ request, params }) => {
+export const PUT: APIRoute = async ({ request, params, url }) => {
   const id = params.id;
+  const env = (url.searchParams.get("env") as "dev" | "prod") || "dev";
+  const sql = getDb(env);
+
   if (!id) {
     return new Response(JSON.stringify({ error: "Missing ID" }), {
       status: 400,
@@ -64,8 +67,11 @@ export const PUT: APIRoute = async ({ request, params }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ params }) => {
+export const DELETE: APIRoute = async ({ params, url }) => {
   const id = params.id;
+  const env = (url.searchParams.get("env") as "dev" | "prod") || "dev";
+  const sql = getDb(env);
+
   if (!id) {
     return new Response(JSON.stringify({ error: "Missing ID" }), {
       status: 400,

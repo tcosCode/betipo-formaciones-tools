@@ -1,10 +1,49 @@
 export const prerender = false;
 
 import type { APIRoute } from "astro";
-import sql from "../../../lib/db";
+import { getDb } from "../../../lib/db";
 import { dbDateToUtc } from "../../../utils/dates";
 
-export const POST: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ url }) => {
+  const env = (url.searchParams.get("env") as "dev" | "prod") || "dev";
+  const sql = getDb(env);
+
+  try {
+    const rawFormations = await sql`
+      SELECT 
+        id, asunto, entidad, descripcion, enlace, oculta,
+        fecha_inicio::text as fecha_inicio,
+        fecha_fin::text as fecha_fin
+      FROM formaciones 
+      ORDER BY fecha_inicio DESC
+    `;
+
+    const formations = rawFormations.map((f) => ({
+      ...f,
+      fecha_inicio: dbDateToUtc(f.fecha_inicio),
+      fecha_fin: dbDateToUtc(f.fecha_fin),
+    }));
+
+    return new Response(JSON.stringify(formations), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Error fetching formations:", error);
+    return new Response(
+      JSON.stringify({ error: "Error fetching formations" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+};
+
+export const POST: APIRoute = async ({ request, url }) => {
+  const env = (url.searchParams.get("env") as "dev" | "prod") || "dev";
+  const sql = getDb(env);
+
   try {
     const data = await request.json();
     const {

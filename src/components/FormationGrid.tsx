@@ -1,15 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { Formation } from "../types";
 import { FormationCard } from "./FormationCard";
 import { FormationModal } from "./FormationModal";
+import { EnvSelector } from "./EnvSelector";
 
 interface FormationGridProps {
   initialFormations: Formation[];
+  initialEnv?: "dev" | "prod";
 }
 
 export default function FormationGrid({
   initialFormations,
+  initialEnv = "dev",
 }: FormationGridProps) {
+  const [env, setEnv] = useState<"dev" | "prod">(initialEnv);
   const [formations, setFormations] = useState<Formation[]>(
     Array.isArray(initialFormations) ? initialFormations : [],
   );
@@ -19,6 +23,35 @@ export default function FormationGrid({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Recargar formaciones cuando cambia el entorno
+  useEffect(() => {
+    const fetchFormations = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`/api/formaciones?env=${env}`);
+        if (!response.ok) throw new Error("Error al cargar");
+        const data = await response.json();
+        setFormations(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error al cargar");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFormations();
+  }, [env]);
+
+  const handleEnvChange = (newEnv: "dev" | "prod") => {
+    if (newEnv === "prod") {
+      if (!window.confirm("¿Estás seguro de cambiar a PRODUCCIÓN?")) {
+        return;
+      }
+    }
+    setEnv(newEnv);
+  };
 
   const handleCreate = () => {
     setCurrentFormation(null);
@@ -34,7 +67,7 @@ export default function FormationGrid({
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/formaciones/${id}`, {
+      const response = await fetch(`/api/formaciones/${id}?env=${env}`, {
         method: "DELETE",
       });
 
@@ -55,8 +88,8 @@ export default function FormationGrid({
     try {
       const isEditing = !!currentFormation;
       const url = isEditing
-        ? `/api/formaciones/${currentFormation.id}`
-        : "/api/formaciones";
+        ? `/api/formaciones/${currentFormation.id}?env=${env}`
+        : `/api/formaciones?env=${env}`;
       const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -104,26 +137,29 @@ export default function FormationGrid({
             </p>
           </div>
 
-          <button
-            onClick={handleCreate}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
-          >
-            <span>Nueva formación</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div className="flex items-center gap-4">
+            <EnvSelector onChange={handleEnvChange} currentEnv={env} />
+            <button
+              onClick={handleCreate}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98]"
             >
-              <path d="M5 12h14" />
-              <path d="M12 5v14" />
-            </svg>
-          </button>
+              <span>Nueva formación</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -133,7 +169,11 @@ export default function FormationGrid({
         </div>
       )}
 
-      {formations.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : formations.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl bg-white py-16 text-center shadow-sm border border-slate-200">
           <div className="mb-4 rounded-full bg-blue-50 p-4 text-blue-600">
             <svg
